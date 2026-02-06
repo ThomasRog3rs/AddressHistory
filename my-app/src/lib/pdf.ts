@@ -78,6 +78,17 @@ function formatAddress(address: Address) {
   return lines.join(", ");
 }
 
+function formatUkDate(value?: string) {
+  if (!value) {
+    return "";
+  }
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) {
+    return value;
+  }
+  return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+}
+
 export async function buildExportPdf({ addresses, documents, range }: PdfBuildOptions) {
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
@@ -104,13 +115,15 @@ export async function buildExportPdf({ addresses, documents, range }: PdfBuildOp
   });
   cursor -= headingSize + 10;
 
-  const rangeLine = `Range: ${range.start} to ${range.end}`;
+  const rangeLine = `Range: ${formatUkDate(range.start)} to ${formatUkDate(range.end)}`;
   page.drawText(rangeLine, { x: margin, y: cursor, size: bodySize, font });
   cursor -= lineHeight * 1.5;
 
   const summaryLines: string[] = ["Addresses included:"];
   orderedAddresses.forEach((address, index) => {
-    const dateLine = `${address.startDate} to ${address.endDate ?? "Present"}`;
+    const dateLine = `${formatUkDate(address.startDate)} to ${
+      address.endDate ? formatUkDate(address.endDate) : "Present"
+    }`;
     summaryLines.push(
       `${index + 1}. ${formatAddress(address)} (${dateLine})`,
     );
@@ -136,7 +149,9 @@ export async function buildExportPdf({ addresses, documents, range }: PdfBuildOp
     cursor -= headingSize + 8;
 
     const addressLine = formatAddress(address);
-    const dateLine = `Dates: ${address.startDate} to ${address.endDate ?? "Present"}`;
+    const dateLine = `Dates: ${formatUkDate(address.startDate)} to ${
+      address.endDate ? formatUkDate(address.endDate) : "Present"
+    }`;
     const lines = [
       ...wrapText(addressLine, page.getWidth() - margin * 2, font, bodySize),
       dateLine,
